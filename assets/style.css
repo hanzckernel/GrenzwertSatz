@@ -1,0 +1,51 @@
+html, body {
+    height: 100%;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f8ff;
+    color: #007fff;
+}
+
+h1 {
+    margin-top: 20px;
+    /* color: #007fff; */
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+.brand-logo {
+    margin: 10px;
+}
+
+#pinCanvas,
+#bucketCanvas {
+    /* border: 2px solid #007fff; */
+    margin: 20px auto;
+    display: block;
+    /* background-color: #fff; */
+}
+
+p {
+    text-align: justify;
+    font-size: 1.1em;
+    color: black;
+}
+
+#legend {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bolder;
+    /* color: #007fff; */
+}
+
+.input-field input[type="number"] {
+    text-align: center;
+    width: 100px;
+    margin: 0 auto;
+}
+
+footer.page-footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    background-color: #007fff; /* Adjust background color to match your theme */
+}
