@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentrales Grenzwerttheorem Experiment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Experiment zum Zentralen Grenzwertsatz</h1>
+    <div id="controls">
+        <label for="numBalls">Anzahl der Bälle:</label>
+        <input type="number" id="numBalls" min="1" max="1000" value="100">
+        <button id="startButton">Start</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div id="description">
+        <p>
+            In diesem Experiment sehen Sie, wie sich Bälle durch ein Gitter von Nägeln bewegen. Die Bälle fallen
+            zufällig nach links oder rechts, wenn sie auf einen Nagel treffen, und sammeln sich schließlich am Boden.
+            Die Verteilung der Bälle folgt einer Gaußschen Verteilung, was den Zentralen Grenzwertsatz demonstriert.
+        </p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

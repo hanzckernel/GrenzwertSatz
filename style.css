@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    margin-top: 20px;
+}
+
+#controls {
+    margin: 20px;
+}
+
+#canvas {
+    border: 1px solid #000;
+    margin: 20px auto;
+    display: block;
+    background-color: #fff;
+}
+
+#description {
+    margin: 20px auto;
+    width: 80%;
+    text-align: left;
+}
