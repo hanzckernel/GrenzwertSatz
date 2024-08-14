@@ -30,6 +30,13 @@ p {
     color: black;
 }
 
+#statistics {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bolder;
+    color: #007fff;
+}
+
 #legend {
     text-align: center;
     font-size: 1.2em;
@@ -48,4 +55,11 @@ footer.page-footer {
     bottom: 0;
     width: 100%;
     background-color: #007fff; /* Adjust background color to match your theme */
+}
+
+#galtonCanvas {
+    background-color: #f0f0f0; /* Light background for the canvas */
+    /* border: 1px solid #007fff; */
+    margin: 20px auto;
+    margin-bottom: 30px; /* Space between the canvas and the legend */
 }
