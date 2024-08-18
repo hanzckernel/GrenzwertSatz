@@ -6,18 +6,62 @@ const pinCtx = pinCanvas.getContext('2d');
 const bucketCanvas = document.getElementById('bucketCanvas');
 const bucketCtx = bucketCanvas.getContext('2d');
 
-const pinRows = 10;
-const pinCols = 9;
+const pinRows = 11;
+const pinCols = pinRows;
 const pinSpacing = 800 / (pinCols + 1);
 const pinRadius = 5;
 const ballRadius = 20; // Increased ball size
-const bucketHeight = 500; // Height of the distribution bars
-const baseY = 600 - 40; // Base position of the distribution bars
 const buckets = Array(pinCols + 1).fill(0);
 
 let animationFrameId;
 let droppedBalls = 0;
 let isRunning = false;
+
+const bucketChart = new Chart(bucketCanvas, {
+    type: 'bar',
+    data: {
+        labels: Array.from({ length: buckets.length }, (_, i) => i + 1),
+        datasets: [{
+            label: 'Ball Count',
+            data: buckets,
+            backgroundColor: 'rgba(0, 127, 255, 0.7)',
+            borderColor: 'black',
+            borderWidth: 0.5
+        },
+    ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Bucket-Nummer'
+                },
+                ticks: {
+                    autoSkip: true,
+                    callback: function(value, index, values) {
+                        const tickSpacing = Math.max(1, Math.floor(values.length / 10)); // Show at most 10 ticks
+                        return index % tickSpacing === 0 ? value : '';
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Anzahl der Bälle'
+                },
+                type: 'linear',
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(0); // Optional: Format y-axis ticks to 0 decimal places
+                    }
+                }
+            },
+        }
+    }
+});
 
 function drawPins() {
     pinCanvas.width = 800;
@@ -40,42 +84,18 @@ function drawPins() {
     }
 }
 
-function drawBuckets() {
-    bucketCanvas.width = 800;
-    bucketCanvas.height = 600;
-    bucketCtx.clearRect(0, 0, bucketCanvas.width, bucketCanvas.height);
-    
-    const bucketWidth = bucketCanvas.width / buckets.length;
-    const maxBalls = Math.max(...buckets);
-    const normalizingFactor = Math.log(maxBalls);
-    for (let i = 0; i < buckets.length; i++) {
-        const x = i * bucketWidth;
-        const y = baseY; // Base position of the distribution bars
-        const height = (Math.log(buckets[i])/normalizingFactor) * bucketHeight;
-        // const height = (buckets[i] / maxBalls) * bucketHeight;
-
-        bucketCtx.fillStyle = `rgba(0, 127, 255, ${buckets[i] / maxBalls})`;
-        bucketCtx.strokeStyle = 'black'; // Border color for the bars
-        bucketCtx.lineWidth = 0.5; // Border width
-        bucketCtx.fillRect(x, y - height, bucketWidth, height);
-        // console.log(x, y- height, bucketWidth, height);
-        bucketCtx.strokeRect(x, y - height, bucketWidth, height); // Add border to the bars
-    }
-    updateLegend(maxBalls);
-}
-
 function animateBall(x, y, row, callback, speed) {
     if (row >= pinRows || !isRunning) {
         const bucketIndex = Math.round((x / 800) * pinCols);
         buckets[bucketIndex]++;
+        bucketChart.data.datasets[0].data = buckets; // Update chart data
+        bucketChart.update(); // Refresh the chart
         callback();
         return;
     }
 
     pinCtx.clearRect(0, 0, pinCanvas.width, pinCanvas.height);
-    bucketCtx.clearRect(0, 0, bucketCanvas.width, bucketCanvas.height);
     drawPins(); // Draw pins
-    drawBuckets(); // Draw buckets
 
     pinCtx.fillStyle = 'blue';
     pinCtx.strokeStyle = 'black'; // Border color for the balls
@@ -86,9 +106,9 @@ function animateBall(x, y, row, callback, speed) {
     pinCtx.fill();
     pinCtx.stroke(); // Draw the border
 
-    const nextX = x + (Math.random() < 0.5 ? -pinSpacing / 2 : pinSpacing / 2);
+    const nextX = x + (Math.random() <= 0.5 ? -pinSpacing / 2 : pinSpacing / 2);
+    console.log(nextX, row);
     const nextY = y + 50;
-    // console.log(`ball coord:`, nextX, nextY)
 
     animationFrameId = requestAnimationFrame(() => animateBall(nextX, nextY, row + 1, callback, speed));
 }
@@ -97,7 +117,6 @@ function startExperiment() {
     const numBalls = parseInt(document.getElementById('numBalls').value, 10);
     buckets.fill(0);
     pinCtx.clearRect(0, 0, pinCanvas.width, pinCanvas.height);
-    bucketCtx.clearRect(0, 0, bucketCanvas.width, bucketCanvas.height);
     drawPins(); // Draw the slits immediately on start
 
     droppedBalls = 0;
@@ -110,8 +129,9 @@ function startExperiment() {
             animateBall(800 / 2, 0, 0, dropNextBall, speed);
         } else {
             alert(`Experiment beendet. Anzahl der fallenden Bälle: ${droppedBalls}`);
-            drawBuckets();
-            drawBestFittingCurve();
+            bucketChart.data.datasets[0].data = buckets; // Update chart data
+            bucketChart.update(); // Refresh the chart
+            // drawBestFittingCurve();
             displayStatistics();
         }
     }
@@ -123,41 +143,77 @@ function stopExperiment() {
     isRunning = false;
     cancelAnimationFrame(animationFrameId);
     alert(`Experiment gestoppt. Anzahl der fallenden Bälle: ${droppedBalls}`);
-    drawBuckets();
-    drawBestFittingCurve();
+    bucketChart.data.datasets[0].data = buckets; // Update chart data
+    bucketChart.update(); // Refresh the chart
+    // drawBestFittingCurve();
     displayStatistics();
 }
 
-function updateLegend(maxBalls) {
-    const legend = document.getElementById('legend');
-    legend.innerHTML = `Anzahl der Bälle in den Eimern (max: ${maxBalls}): <br>`;
-    buckets.forEach((count, index) => {
-        legend.innerHTML += `<span style="background-color: rgba(0, 127, 255, ${count / maxBalls}); 
-                             display: inline-block; width: 30px; height: 10px; margin: 2px;">
-                             </span> ${index}:${count} `;
-    });
-}
+// function drawBestFittingCurve() {
+//     const { mean, variance } = computeStatistics();
+//     const stdDev = Math.sqrt(variance);
 
-// Compute mean and variation of the ball distribution
-// function computeStatistics() {
-//     const totalBalls = buckets.reduce((sum, count) => sum + count, 0);
-//     const mean = totalBalls / buckets.length;
+//     // Create a normal distribution for fitting
+//     const scale = bucketCanvas.width / buckets.length;
+//     const normalDist = Array.from({ length: buckets.length }, (_, i) => {
+//         const x = i * scale;
+//         const meanAdjusted = (x - (bucketCanvas.width / 2)) / (scale / 6);
+//         const exponent = -0.5 * Math.pow(meanAdjusted / stdDev, 2);
+//         return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+//     });
 
-//     const variance = buckets.reduce((sum, count) => sum + Math.pow(count - mean, 2), 0) / buckets.length;
+//     // Normalize to fit the canvas height
+//     const maxDist = Math.max(...normalDist);
+//     const heightScale = bucketCanvas.height / maxDist;
+//     const normalizedDist = normalDist.map(value => value * heightScale);
 
-//     return { mean, variance };
+//     // Create a new dataset for the normal distribution curve
+//     const normalDistDataset = {
+//         label: 'Best Fitting Curve',
+//         data: normalizedDist,
+//         borderColor: 'red',
+//         borderWidth: 2,
+//         fill: false,
+//         type: 'line',
+//         yAxisID: 'y-axis-1'
+//     };
+
+//     // Add the new dataset to the chart and update it
+//     bucketChart.data.datasets.push(normalDistDataset);
+//     bucketChart.update();
 // }
 
-// function computeStatistics() {
-//     const totalBalls = buckets.reduce((sum, count) => sum + count, 0);
+// function drawBestFittingCurve() {
+//     const { mean, variance } = computeStatistics();
+//     const stdDev = Math.sqrt(variance);
     
-//     // Calculate weighted mean
-//     const mean = buckets.reduce((sum, count, index) => sum + index * count, 0) / totalBalls;
+//     const ctx = bucketCanvas.getContext('2d');
+//     ctx.clearRect(0, 0, bucketCanvas.width, bucketCanvas.height); // Clear previous drawings
+//     ctx.beginPath();
+//     ctx.strokeStyle = 'red';
+//     ctx.lineWidth = 2;
 
-//     // Calculate weighted variance
-//     const variance = buckets.reduce((sum, count, index) => sum + count * Math.pow(index - mean, 2), 0) / totalBalls;
+//     // Create a normal distribution for fitting
+//     const scale = bucketCanvas.width / buckets.length;
+//     const normalDist = Array.from({ length: buckets.length }, (_, i) => {
+//         const x = i * scale;
+//         const meanAdjusted = (x - (bucketCanvas.width / 2)) / (scale / 6);
+//         const exponent = -0.5 * Math.pow(meanAdjusted / stdDev, 2);
+//         return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+//     });
 
-//     return { mean, variance };
+//     // Normalize to fit the canvas height
+//     const maxDist = Math.max(...normalDist);
+//     const heightScale = bucketCanvas.height / maxDist;
+
+//     // Draw the normal distribution curve
+//     ctx.moveTo(0, bucketCanvas.height - (normalDist[0] * heightScale));
+//     for (let i = 1; i < normalDist.length; i++) {
+//         const x = i * scale;
+//         const y = bucketCanvas.height - (normalDist[i] * heightScale);
+//         ctx.lineTo(x, y);
+//     }
+//     ctx.stroke();
 // }
 
 function computeStatistics() {
@@ -165,101 +221,126 @@ function computeStatistics() {
     const middleIndex = (buckets.length - 1) / 2;
 
     // Calculate weighted mean with normalized indices
-    const mean = buckets.reduce((sum, count, index) => sum + (index - middleIndex) * count, 0) / totalBalls;
-
+    const mean = buckets.reduce((sum, count, index) => sum + (index) * count, 0) / totalBalls;
+    const trueMean = buckets.reduce((sum, count, index) => sum + (index- middleIndex ) * count, 0) / totalBalls;
     // Calculate weighted variance with normalized indices
-    const variance = buckets.reduce((sum, count, index) => sum + count * Math.pow((index - middleIndex) - mean, 2), 0) / totalBalls;
+    const variance = buckets.reduce((sum, count, index) => sum + count * Math.pow((index - middleIndex) - trueMean, 2), 0) / totalBalls;
 
     return { mean, variance };
 }
 
-
-// Draw the best fitting curve of the eventual ball distribution
-function drawBestFittingCurve() {
-    const { mean, variance } = computeStatistics();
-    const stdDev = Math.sqrt(variance);
-    
-    const ctx = bucketCanvas.getContext('2d');
-    // ctx.clearRect(0, 0, bucketCanvas.width, bucketCanvas.height); // Clear previous drawings
-    ctx.beginPath();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-
-    // const scaleFactor = bucketCanvas.height / (Math.max(...buckets) * 1.5); // Scale factor to fit the curve within the canvas height
-
-    // const maxCount = Math.max(...buckets);
-    // const offset = bucketCanvas.height - (maxCount * scaleFactor)*5 ;
-
-    // Calculate the middle points of each bar
-    const normalizingFactor = Math.log(Math.max(...buckets));
-    const middlePoints = buckets.map((count, index) => {
-        const x = (index + 0.5) * (bucketCanvas.width / buckets.length);
-        const y = bucketCanvas.height - (Math.log(count)/normalizingFactor) * bucketHeight;
-        // console.log(`middle point:`, x, y);
-        return { x, y };
-    });
-
-    // Draw the curve through the middle points
-    ctx.moveTo(middlePoints[0].x, middlePoints[0].y);
-    // ctx.moveTo(middlePoints[0].x+offset, middlePoints[0].y+offset);
-    for (let i = 1; i < middlePoints.length - 1; i++) {
-        const cpX = (middlePoints[i].x + middlePoints[i + 1].x) / 2;
-        const cpY = (middlePoints[i].y + middlePoints[i + 1].y) / 2;
-        ctx.quadraticCurveTo(middlePoints[i].x, middlePoints[i].y, cpX, cpY);
-    }
-    // console.log(offset);
-
-    ctx.stroke();
-}
-
-// Display mean and variance
 function displayStatistics() {
     const { mean, variance } = computeStatistics();
-    document.getElementById('statistics').innerText = `Mean: ${mean.toFixed(2)}, Variance: ${variance.toFixed(2)}`;
+    document.getElementById('statistics').innerText = `Mean: Bucket ${mean.toFixed(2)}, Variance: ${variance.toFixed(2)}`;
 }
-                     
+
 // Draw pins on page load
 window.onload = drawPins;
 
 
+document.getElementById('generate').addEventListener('click', function() {
+    const probabilities = document.getElementById('dice-probabilities').value.split(',').map(p => eval(p.trim()));
+    const numConvolutions = parseInt(document.getElementById('num-convolutions').value, 10);
 
-function generateData(numSamples, numBalls) {
-    const data = [];
-    for (let i = 0; i < numSamples; i++) {
-        let sum = 0;
-        for (let j = 0; j < numBalls; j++) {
-            sum += Math.random(); // Assuming uniform distribution [0, 1)
-        }
-        data.push(sum);
+    // Validation
+    if (probabilities.length !== 6 || probabilities.some(isNaN)) {
+        alert('Please enter exactly six valid probabilities.');
+        return;
     }
-    return data;
+
+    if (numConvolutions < 1 || numConvolutions > 50) {
+        alert('Number of convolutions must be between 1 and 50.');
+        return;
+    }
+
+    animationRunning = true;
+    // Perform convolutions and animate
+    animateConvolution(probabilities, numConvolutions);
+});
+
+document.getElementById('stop').addEventListener('click', function() {
+    animationRunning = false;
+});
+
+function animateConvolution(initialProbs, numConvolutions) {
+    const animationContainer = document.getElementById('animation-container');
+    animationContainer.innerHTML = ''; // Clear previous content
+
+    const canvas = document.createElement('canvas');
+    animationContainer.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800;
+    canvas.height = 400;
+
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [], // Labels for the x-axis
+            datasets: [{
+                label: 'Probability',
+                data: [], // Data for the bars
+                backgroundColor: 'green'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Summe der Würfelseiten'
+                    },
+                    ticks: {
+                        autoSkip: false,
+                        callback: function(value, index, values) {
+                            // Adjust tick spacing
+                            const tickSpacing = Math.max(1, Math.floor(values.length / 10)); // Show at most 10 ticks
+                            return index % tickSpacing === 0 ? value + 1 : '';
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Wahrscheinlichkeit'
+                    }
+                }
+            }
+        }
+    });
+
+    function convolve(a, b) {
+        const result = Array(a.length + b.length - 1).fill(0);
+        for (let i = 0; i < a.length; i++) {
+            for (let j = 0; j < b.length; j++) {
+                result[i + j] += a[i] * b[j];
+            }
+        }
+        return result;
+    }
+
+    let currentDistribution = initialProbs.slice();
+    let step = 0;
+
+    function updateChart() {
+        if (step > numConvolutions || !animationRunning) return;
+        if (step > 0) {
+            currentDistribution = convolve(currentDistribution, initialProbs);
+        }
+
+        const labels = Array.from({ length: currentDistribution.length }, (_, i) => i + 1);
+        const maxProbability = Math.max(...currentDistribution);
+        
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = currentDistribution;
+        chart.options.scales.y.max = maxProbability * 1.1; // Adjust y-axis scale
+        chart.update();
+
+        step++;
+        setTimeout(updateChart, 1000);
+    }
+
+    updateChart();
 }
-
-// Example function to create histogram buckets
-// function createBuckets(data, numBuckets) {
-//     const min = Math.min(...data);
-//     const max = Math.max(...data);
-//     const bucketSize = (max - min) / numBuckets;
-//     const buckets = new Array(numBuckets).fill(0);
-
-//     data.forEach(value => {
-//         const bucketIndex = Math.floor((value - min) / bucketSize);
-//         buckets[Math.min(bucketIndex, numBuckets - 1)]++;
-//     });
-
-//     return buckets;
-// }
-
-// // Example function to draw the histogram and best fitting curve
-// function drawHistogramAndCurve(data, numBuckets) {
-//     const buckets = createBuckets(data, numBuckets);
-//     drawBars(buckets);
-//     drawBestFittingCurve(buckets);
-// }
-
-// Call the functions with appropriate parameters
-const numSamples = 10000;
-const numBalls = 10;
-const numBuckets = 50;
-const data = generateData(numSamples, numBalls);
-// drawHistogramAndCurve(data, numBuckets);

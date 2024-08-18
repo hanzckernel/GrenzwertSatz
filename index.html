@@ -8,21 +8,26 @@
     <title>Zentrales Grenzwerttheorem Experiment</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link type="text/css" rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </head>
 <body>
     <!-- Top Navigation Bar -->
     <nav>
         <div class="nav-wrapper blue">
-            <a href="#" class="brand-logo">Experiment zum Zentralen Grenzwertsatz</a>
+            <a href="#" class="brand-logo">Experiment</a>
         </div>
     </nav>
     <!-- Main Content --> 
     <div class="container">
         <h1 class="center-align blue-text text-darken-4">Experiment zum Zentralen Grenzwertsatz</h1>
         <div class="row center-align">
-            <div class="input-field col s6 offset-s3">
-                <input type="number" id="numBalls" min="1" max="1000" value="100" style="text-align: center;">
-                <label for="numBalls" class="blue-text text-darken-2">Anzahl der Bälle</label>
+            <div class="row col s12">
+                <div class="input-field col s12">
+                    <input type="number" id="numBalls" min="1" max="1000" class="validate">
+                    <label for="numBalls">Anzahl der Bälle</label>
+                </div>
             </div>
         </div>
         <div class="row center-align">
@@ -61,6 +66,37 @@
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="row col s12 center-align">
+            <div class="input-field col s6 offset-s3">
+                <label for="dice-probabilities">Wahrscheinlichkeiten der Würfelseiten</label>
+                <input type="text" id="dice-probabilities" value="1/6, 1/6, 1/6, 1/6, 1/6, 1/6" class="validate">  
+            </div>
+        </div>
+        <div class="row col s12 center-align">
+            <div class="input-field col s6 offset-s3">
+                <label for="num-convolutions" class="blue-text text-darken-2">Anzahl der Faltungen</label>
+                <input type="number" id="num-convolutions" min="1" max="50" style="text-align: center;">
+                <span class="helper-text" data-error="wrong" data-success="right">Faltung zwischen 1 und 50</span>
+            </div>
+        </div>
+        <div class="row center-align">
+            <button id="generate" class="btn waves-effect waves-light">Generate</button>
+            <button id="stop" class="btn waves-effect waves-light red">Stop</button>
+        </div>
+        
+
+        <div class="output-section row center-align">
+            <h2>Resulting Animation:</h2>
+            <div id="animation-container">
+                <!-- Animation will be injected here -->
+            </div>
+        </div>
+        </div>
+    </div>
+
+
     <!-- Footer -->
          <!-- Bottom Copyright Bar -->
     <footer class="page-footer blue">
@@ -73,6 +109,8 @@
         </div>
     </footer>
     <!--JavaScript at end of body for optimized loading-->
+    <!-- Include Chart.js library -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
     <!-- <script type="text/javascript" src="js/materialize.min.js"></script> -->
     <script src="script.js"></script>
 </body>
